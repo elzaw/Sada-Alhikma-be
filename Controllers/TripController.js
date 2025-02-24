@@ -236,6 +236,40 @@ const AddClientToTrip = async (req, res) => {
   }
 };
 
+const getTripByClient = async (req, res) => {
+  try {
+    const { tripId, clientId } = req.params;
+    console.log(`Fetching trip: ${tripId} for client: ${clientId}`);
+
+    // Fetch the trip and populate the `clients.client` field
+    const trip = await Trip.findById(tripId).populate("clients.client");
+
+    if (!trip) {
+      console.log("Trip not found:", tripId);
+      return res.status(404).json({ error: "Trip not found" });
+    }
+
+    // Find the specific client within the trip's clients array
+    const clientData = trip.clients.find(
+      (c) => c.client._id.toString() === clientId
+    );
+
+    if (!clientData) {
+      console.log("Client not found in this trip:", clientId);
+      return res.status(404).json({ error: "Client not found in this trip" });
+    }
+
+    // Return full trip details but only with the matched client in `clients`
+    res.json({
+      ...trip.toObject(), // Convert Mongoose document to a plain object
+      clients: [clientData], // Replace the clients array with only the matched client
+    });
+  } catch (error) {
+    console.error("Error fetching trip for client:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   CreateTrip,
   UpdateTrip,
@@ -245,4 +279,5 @@ module.exports = {
   getTrip,
   GetLastTripNumberForDay,
   AddClientToTrip,
+  getTripByClient,
 };
