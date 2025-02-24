@@ -1,5 +1,5 @@
 const { User } = require("../Models/UserModel");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 // تسجيل مستخدم جديد
@@ -7,17 +7,17 @@ const RegisterUser = async (req, res, next) => {
   try {
     const { username, password } = req.body;
 
+    // Check if user already exists
     const existingUser = await User.findOne({ username });
-
     if (existingUser) {
       return res.status(400).json({ error: "Username already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, password: hashedPassword });
-    await user.save();
+    // Create new user
+    const user = User.create({ username, password });
 
-    res.status(201).json(user);
+    // Return success response
+    res.status(201).json({ data: { user } });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -27,14 +27,19 @@ const RegisterUser = async (req, res, next) => {
 const LoginUser = async (req, res, next) => {
   try {
     const { username, password } = req.body;
+    console.log("Received login request:", { username, password }); // Log the request payload
 
     const user = await User.findOne({ username });
+    console.log("sssss" + user);
+
     if (!user) {
+      console.log("User not found:", username); // Log if user is not found
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log("Password mismatch for user:", username); // Log if password doesn't match
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
@@ -44,6 +49,7 @@ const LoginUser = async (req, res, next) => {
 
     res.json({ user, token });
   } catch (error) {
+    console.error("Login error:", error); // Log any unexpected errors
     res.status(400).json({ error: error.message });
   }
 };
