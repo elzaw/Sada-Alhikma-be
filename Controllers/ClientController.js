@@ -1,6 +1,27 @@
 const { Client } = require("../Models/ClientModel.js");
+const { Client: WhatsAppClient, LocalAuth } = require("whatsapp-web.js");
+const qrcode = require("qrcode");
 
-// ��نشا�� عميل ��ديد
+// إنشاء عميل واتساب
+const whatsappClient = new WhatsAppClient({
+  authStrategy: new LocalAuth(),
+  puppeteer: { headless: true },
+});
+
+whatsappClient.on("qr", (qr) => {
+  console.log("Scan this QR code with WhatsApp:");
+  qrcode.toString(qr, { type: "terminal" }, (err, url) => {
+    console.log(url);
+  });
+});
+
+whatsappClient.on("ready", () => {
+  console.log("✅ WhatsApp Client is ready!");
+});
+
+whatsappClient.initialize();
+
+// إنشاء عميل جديد
 const createClient = async (req, res) => {
   try {
     const client = new Client(req.body);
@@ -19,7 +40,7 @@ const createClient = async (req, res) => {
   }
 };
 
-// ��عرض عميل��
+// عرض عميل
 const getClient = async (req, res) => {
   try {
     const client = await Client.findById(req.params.id).populate("bookings");
@@ -31,7 +52,6 @@ const getClient = async (req, res) => {
 };
 
 // عرض كل العملاء
-
 const getAllClients = async (req, res) => {
   try {
     const clients = await Client.find().populate("bookings");
@@ -40,8 +60,8 @@ const getAllClients = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
-// ��تعديل العميل
 
+// تعديل العميل
 const updateClient = async (req, res) => {
   try {
     const updatedClient = await Client.findByIdAndUpdate(
@@ -58,7 +78,6 @@ const updateClient = async (req, res) => {
 };
 
 // حذف العميل
-
 const deleteClient = async (req, res) => {
   try {
     const deletedClient = await Client.findByIdAndDelete(req.params.id);
@@ -70,30 +89,23 @@ const deleteClient = async (req, res) => {
   }
 };
 
-// ارسال رسالة واتساب لعميل
-
+// إرسال رسالة واتساب لعميل
 const sendWhatsAppMessage = async (req, res) => {
   try {
     const { phone, message } = req.body;
     if (!phone || !message)
       return res.status(400).json({ error: "Phone and message are required" });
 
-    await client.messages.create({
-      body: message,
-      from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
-      to: `whatsapp:${phone}`,
-    });
+    const formattedPhone = phone.includes("@c.us") ? phone : `${phone}@c.us`;
+    await whatsappClient.sendMessage(formattedPhone, message);
 
-    res.json({
-      success: true,
-      message: "WhatsApp message sent successfully",
-    });
+    res.json({ success: true, message: "WhatsApp message sent successfully" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 
-// ارسال رسائل لمجموعة من العملاء
+// إرسال رسائل لمجموعة من العملاء
 const sendBulkWhatsAppMessages = async (req, res) => {
   try {
     const { phones, message } = req.body;
@@ -103,15 +115,15 @@ const sendBulkWhatsAppMessages = async (req, res) => {
         .json({ error: "Phones array and message are required" });
     }
 
-    const messages = phones.map((phone) =>
-      client.messages.create({
-        body: message,
-        from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
-        to: `whatsapp:${phone}`,
+    await Promise.all(
+      phones.map((phone) => {
+        const formattedPhone = phone.includes("@c.us")
+          ? phone
+          : `${phone}@c.us`;
+        return whatsappClient.sendMessage(formattedPhone, message);
       })
     );
 
-    await Promise.all(messages);
     res.json({
       success: true,
       message: "Bulk WhatsApp messages sent successfully",
