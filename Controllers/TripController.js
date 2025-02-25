@@ -270,6 +270,37 @@ const getTripByClient = async (req, res) => {
   }
 };
 
+const getTripsByDate = async (req, res) => {
+  const { returnDate } = req.query;
+
+  if (!returnDate) {
+    return res.status(400).json({ message: "Return date is required." });
+  }
+
+  try {
+    const startOfDay = new Date(returnDate);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(returnDate);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const trips = await Trip.find({
+      "clients.returnDate": { $gte: startOfDay, $lt: endOfDay },
+    }).populate("clients.client");
+
+    if (!trips.length) {
+      return res
+        .status(404)
+        .json({ message: "No trips found for the given return date." });
+    }
+
+    res.json(trips);
+  } catch (error) {
+    console.error("Error fetching trips:", error);
+    res.status(500).json({ message: "Server error while fetching trips." });
+  }
+};
+
 module.exports = {
   CreateTrip,
   UpdateTrip,
@@ -280,4 +311,5 @@ module.exports = {
   GetLastTripNumberForDay,
   AddClientToTrip,
   getTripByClient,
+  getTripsByDate,
 };

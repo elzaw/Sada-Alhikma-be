@@ -9,12 +9,13 @@ const {
   GetLastTripNumberForDay,
   AddClientToTrip,
   getTripByClient,
+  getTripsByDate,
 } = require("../Controllers/TripController");
 
 const router = express.Router();
 
 router.route("/").post(CreateTrip).put(UpdateTrip).get(GetAllTrips);
-
+router.route("/bydate").get(getTripsByDate);
 router.route("/last-trip-number").get(GetLastTripNumberForDay);
 router.route("/report/:id").get(GetTripReport);
 
