@@ -9,6 +9,7 @@ const clientRoutes = require("./Routes/ClientRoutes");
 const tripRoutes = require("./Routes/TripRoutes");
 const userRoutes = require("./Routes/UserRoutes");
 const invoiceRoutes = require("./Routes/InvoiceRoutes");
+const accommodationRoutes = require("./Routes/AccommodationRoutes");
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use("/api/clients", clientRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/invoices", invoiceRoutes);
+app.use("/api/accommodations", accommodationRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
