@@ -2,12 +2,6 @@ const { Client } = require("../Models/ClientModel.js");
 const { Client: WhatsAppClient, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode");
 
-// إنشاء عميل واتساب
-const whatsappClient = new WhatsAppClient({
-  authStrategy: new LocalAuth(),
-  puppeteer: { headless: true },
-});
-
 whatsappClient.on("qr", (qr) => {
   console.log("Scan this QR code with WhatsApp:");
   qrcode.toString(qr, { type: "terminal" }, (err, url) => {
