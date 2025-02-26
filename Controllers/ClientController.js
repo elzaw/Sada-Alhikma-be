@@ -2,27 +2,27 @@ const { Client } = require("../Models/ClientModel.js");
 const { Client: WhatsAppClient, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode");
 
-// Initialize WhatsApp Client
-const whatsappClient = new WhatsAppClient({
-  authStrategy: new LocalAuth(), // Persist session data locally
-  puppeteer: {
-    headless: true, // Run in headless mode
-    args: ["--no-sandbox", "--disable-setuid-sandbox"], // Add these args for Linux environments
-  },
-});
+// // Initialize WhatsApp Client
+// const whatsappClient = new WhatsAppClient({
+//   authStrategy: new LocalAuth(), // Persist session data locally
+//   puppeteer: {
+//     headless: true, // Run in headless mode
+//     args: ["--no-sandbox", "--disable-setuid-sandbox"], // Add these args for Linux environments
+//   },
+// });
 
-whatsappClient.on("qr", (qr) => {
-  console.log("Scan this QR code with WhatsApp:");
-  qrcode.toString(qr, { type: "terminal" }, (err, url) => {
-    console.log(url);
-  });
-});
+// hatsappClient.on("qr", (qr) => {
+//   console.log("Scan this QR code with WhatsApp:");
+//   qrcode.toString(qr, { type: "terminal" }, (err, url) => {
+//     console.log(url);
+//   });
+// });
+// w
+// whatsappClient.on("ready", () => {
+//   console.log("✅ WhatsApp Client is ready!");
+// });
 
-whatsappClient.on("ready", () => {
-  console.log("✅ WhatsApp Client is ready!");
-});
-
-whatsappClient.initialize();
+// whatsappClient.initialize();
 
 // إنشاء عميل جديد
 const createClient = async (req, res) => {
