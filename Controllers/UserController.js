@@ -1,5 +1,5 @@
 const { User } = require("../Models/UserModel");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 // تسجيل مستخدم جديد

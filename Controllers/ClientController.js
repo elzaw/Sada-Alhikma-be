@@ -2,10 +2,13 @@ const { Client } = require("../Models/ClientModel.js");
 const { Client: WhatsAppClient, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode");
 
-// إنشاء عميل واتساب
+// Initialize WhatsApp Client
 const whatsappClient = new WhatsAppClient({
-  authStrategy: new LocalAuth(),
-  puppeteer: { headless: true },
+  authStrategy: new LocalAuth(), // Persist session data locally
+  puppeteer: {
+    headless: true, // Run in headless mode
+    args: ["--no-sandbox", "--disable-setuid-sandbox"], // Add these args for Linux environments
+  },
 });
 
 whatsappClient.on("qr", (qr) => {

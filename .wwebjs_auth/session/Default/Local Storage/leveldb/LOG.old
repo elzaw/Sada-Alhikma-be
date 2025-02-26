@@ -1,2 +1,3 @@
-2025/02/25-16:13:43.779 1708 Creating DB D:\Node\Sada-Alhikma-be\.wwebjs_auth\session\Default\Local Storage\leveldb since it was missing.
-2025/02/25-16:13:43.929 1708 Reusing MANIFEST D:\Node\Sada-Alhikma-be\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
+2025/02/26-01:00:38.032 3df8 Reusing MANIFEST E:\Work\SadaAlhekma\Backend\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
+2025/02/26-01:00:38.033 3df8 Recovering log #3
+2025/02/26-01:00:38.101 3df8 Reusing old log E:\Work\SadaAlhekma\Backend\.wwebjs_auth\session\Default\Local Storage\leveldb/000003.log 
