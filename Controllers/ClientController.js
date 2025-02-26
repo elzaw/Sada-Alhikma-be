@@ -77,24 +77,28 @@ const deleteClient = async (req, res) => {
 
 // Handle file upload and process Excel/CSV
 const uploadClientsFromFile = async (req, res) => {
+  console.log("File upload request received");
   if (!req.file) {
+    console.log("No file uploaded");
     return res
       .status(400)
       .json({ success: false, message: "No file uploaded." });
   }
 
+  console.log("File uploaded:", req.file);
   const filePath = req.file.path;
 
   try {
     if (req.file.mimetype === "text/csv") {
-      // Process CSV file
+      console.log("Processing CSV file");
       const results = [];
       fs.createReadStream(filePath)
         .pipe(csv())
         .on("data", (data) => results.push(data))
         .on("end", async () => {
+          console.log("CSV data:", results);
           await Client.insertMany(results);
-          fs.unlinkSync(filePath); // Delete the file after processing
+          fs.unlinkSync(filePath);
           res.json({
             success: true,
             message: "CSV file processed successfully.",
@@ -105,26 +109,28 @@ const uploadClientsFromFile = async (req, res) => {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       req.file.mimetype === "application/vnd.ms-excel"
     ) {
-      // Process Excel file
+      console.log("Processing Excel file");
       const workbook = xlsx.readFile(filePath);
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const data = xlsx.utils.sheet_to_json(worksheet);
+      console.log("Excel data:", data);
       await Client.insertMany(data);
-      fs.unlinkSync(filePath); // Delete the file after processing
+      fs.unlinkSync(filePath);
       res.json({
         success: true,
         message: "Excel file processed successfully.",
       });
     } else {
-      fs.unlinkSync(filePath); // Delete the file if it's not CSV or Excel
+      console.log("Unsupported file type:", req.file.mimetype);
+      fs.unlinkSync(filePath);
       res
         .status(400)
         .json({ success: false, message: "Unsupported file type." });
     }
   } catch (error) {
     console.error("Error processing file:", error);
-    fs.unlinkSync(filePath); // Delete the file in case of error
+    fs.unlinkSync(filePath);
     res
       .status(500)
       .json({ success: false, message: "Failed to process file." });
