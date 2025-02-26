@@ -77,63 +77,73 @@ const deleteClient = async (req, res) => {
 
 // Handle file upload and process Excel/CSV
 const uploadClientsFromFile = async (req, res) => {
-  console.log("File upload request received");
   if (!req.file) {
-    console.log("No file uploaded");
     return res
       .status(400)
       .json({ success: false, message: "No file uploaded." });
   }
 
-  console.log("File uploaded:", req.file);
   const filePath = req.file.path;
 
   try {
+    let results = [];
     if (req.file.mimetype === "text/csv") {
-      console.log("Processing CSV file");
-      const results = [];
-      fs.createReadStream(filePath)
-        .pipe(csv())
-        .on("data", (data) => results.push(data))
-        .on("end", async () => {
-          console.log("CSV data:", results);
-          await Client.insertMany(results);
-          fs.unlinkSync(filePath);
-          res.json({
-            success: true,
-            message: "CSV file processed successfully.",
-          });
-        });
+      // Process CSV file
+      results = await new Promise((resolve, reject) => {
+        const data = [];
+        fs.createReadStream(filePath)
+          .pipe(csv())
+          .on("data", (row) => {
+            // Validate required fields
+            if (
+              !row.name ||
+              !row.phone ||
+              !row.nationality ||
+              !row.identityNumber ||
+              !row.boardingLocation
+            ) {
+              reject(new Error("Missing required fields in the CSV file."));
+            }
+            data.push(row);
+          })
+          .on("end", () => resolve(data))
+          .on("error", (error) => reject(error));
+      });
     } else if (
       req.file.mimetype ===
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       req.file.mimetype === "application/vnd.ms-excel"
     ) {
-      console.log("Processing Excel file");
+      // Process Excel file
       const workbook = xlsx.readFile(filePath);
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const data = xlsx.utils.sheet_to_json(worksheet);
-      console.log("Excel data:", data);
-      await Client.insertMany(data);
-      fs.unlinkSync(filePath);
-      res.json({
-        success: true,
-        message: "Excel file processed successfully.",
-      });
+      results = xlsx.utils.sheet_to_json(worksheet);
+
+      // Validate required fields
+      for (const row of results) {
+        if (
+          !row.name ||
+          !row.phone ||
+          !row.nationality ||
+          !row.identityNumber ||
+          !row.boardingLocation
+        ) {
+          throw new Error("Missing required fields in the Excel file.");
+        }
+      }
     } else {
-      console.log("Unsupported file type:", req.file.mimetype);
-      fs.unlinkSync(filePath);
-      res
-        .status(400)
-        .json({ success: false, message: "Unsupported file type." });
+      throw new Error("Unsupported file type.");
     }
+
+    // Insert validated data into MongoDB
+    await Client.insertMany(results);
+    fs.unlinkSync(filePath); // Delete the file after processing
+    res.json({ success: true, message: "File processed successfully." });
   } catch (error) {
     console.error("Error processing file:", error);
-    fs.unlinkSync(filePath);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to process file." });
+    fs.unlinkSync(filePath); // Delete the file in case of error
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
