@@ -1,6 +1,11 @@
 const { Client } = require("../Models/ClientModel.js");
-// const { Client: WhatsAppClient, LocalAuth } = require("whatsapp-web.js");
-const qrcode = require("qrcode");
+const xlsx = require("xlsx");
+const csv = require("csv-parser");
+const fs = require("fs");
+const multer = require("multer");
+
+// Multer configuration for file upload
+const upload = multer({ dest: "uploads/" }).single("file");
 
 // إنشاء عميل جديد
 const createClient = async (req, res) => {
@@ -70,49 +75,61 @@ const deleteClient = async (req, res) => {
   }
 };
 
-// // إرسال رسالة واتساب لعميل
-// const sendWhatsAppMessage = async (req, res) => {
-//   try {
-//     const { phone, message } = req.body;
-//     if (!phone || !message)
-//       return res.status(400).json({ error: "Phone and message are required" });
+// Handle file upload and process Excel/CSV
+const uploadClientsFromFile = async (req, res) => {
+  if (!req.file) {
+    return res
+      .status(400)
+      .json({ success: false, message: "No file uploaded." });
+  }
 
-//     const formattedPhone = phone.includes("@c.us") ? phone : `${phone}@c.us`;
-//     await whatsappClient.sendMessage(formattedPhone, message);
+  const filePath = req.file.path;
 
-//     res.json({ success: true, message: "WhatsApp message sent successfully" });
-//   } catch (error) {
-//     res.status(400).json({ error: error.message });
-//   }
-// };
-
-// // إرسال رسائل لمجموعة من العملاء
-// const sendBulkWhatsAppMessages = async (req, res) => {
-//   try {
-//     const { phones, message } = req.body;
-//     if (!phones || !Array.isArray(phones) || phones.length === 0 || !message) {
-//       return res
-//         .status(400)
-//         .json({ error: "Phones array and message are required" });
-//     }
-
-//     await Promise.all(
-//       phones.map((phone) => {
-//         const formattedPhone = phone.includes("@c.us")
-//           ? phone
-//           : `${phone}@c.us`;
-//         return whatsappClient.sendMessage(formattedPhone, message);
-//       })
-//     );
-
-//     res.json({
-//       success: true,
-//       message: "Bulk WhatsApp messages sent successfully",
-//     });
-//   } catch (error) {
-//     res.status(400).json({ error: error.message });
-//   }
-// };
+  try {
+    if (req.file.mimetype === "text/csv") {
+      // Process CSV file
+      const results = [];
+      fs.createReadStream(filePath)
+        .pipe(csv())
+        .on("data", (data) => results.push(data))
+        .on("end", async () => {
+          await Client.insertMany(results);
+          fs.unlinkSync(filePath); // Delete the file after processing
+          res.json({
+            success: true,
+            message: "CSV file processed successfully.",
+          });
+        });
+    } else if (
+      req.file.mimetype ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      req.file.mimetype === "application/vnd.ms-excel"
+    ) {
+      // Process Excel file
+      const workbook = xlsx.readFile(filePath);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = xlsx.utils.sheet_to_json(worksheet);
+      await Client.insertMany(data);
+      fs.unlinkSync(filePath); // Delete the file after processing
+      res.json({
+        success: true,
+        message: "Excel file processed successfully.",
+      });
+    } else {
+      fs.unlinkSync(filePath); // Delete the file if it's not CSV or Excel
+      res
+        .status(400)
+        .json({ success: false, message: "Unsupported file type." });
+    }
+  } catch (error) {
+    console.error("Error processing file:", error);
+    fs.unlinkSync(filePath); // Delete the file in case of error
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to process file." });
+  }
+};
 
 module.exports = {
   createClient,
@@ -120,6 +137,6 @@ module.exports = {
   getAllClients,
   updateClient,
   deleteClient,
-  // sendWhatsAppMessage,
-  // sendBulkWhatsAppMessages,
+  uploadClientsFromFile,
+  upload, // Export the multer upload middleware
 };
