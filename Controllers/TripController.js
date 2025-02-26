@@ -278,12 +278,17 @@ const getTripsByDate = async (req, res) => {
   }
 
   try {
-    // تحويل تاريخ العودة المحدد إلى تاريخ بدون وقت
+    // Convert returnDate to a Date object at UTC midnight
     const targetDate = new Date(returnDate);
     targetDate.setUTCHours(0, 0, 0, 0);
 
+    // Define the range to match the exact date ignoring time
+    const nextDay = new Date(targetDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    // Fetch trips that contain at least one client with the return date
     const trips = await Trip.find({
-      "clients.returnDate": targetDate,
+      "clients.returnDate": { $gte: targetDate, $lt: nextDay },
     }).populate("clients.client");
 
     if (!trips.length) {
@@ -292,7 +297,20 @@ const getTripsByDate = async (req, res) => {
         .json({ message: "No trips found for the given return date." });
     }
 
-    res.json(trips);
+    // **Filter clients within each trip before sending response**
+    const filteredTrips = trips.map((trip) => {
+      const filteredClients = trip.clients.filter(
+        (c) =>
+          c.returnDate && c.returnDate >= targetDate && c.returnDate < nextDay
+      );
+
+      return {
+        ...trip.toObject(), // Convert Mongoose document to plain object
+        clients: filteredClients, // Replace with filtered clients
+      };
+    });
+
+    res.json(filteredTrips);
   } catch (error) {
     console.error("Error fetching trips:", error);
     res.status(500).json({ message: "Server error while fetching trips." });
