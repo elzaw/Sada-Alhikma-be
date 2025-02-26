@@ -5,7 +5,7 @@ const createAccommodation = async (req, res, next) => {
     const { tripId, supervisorName, supervisorPhone, groups, roomCounts } =
       req.body;
 
-    // تحقق مما إذا كان هناك تسكين موجود لهذه الرحلة
+    // تحقق مما إذا كان هناك تسكين  موجود لهذه الرحلة
     let existingAccommodation = await Accommodation.findOne({ tripId });
 
     if (existingAccommodation) {

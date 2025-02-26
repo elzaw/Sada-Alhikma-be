@@ -21,15 +21,15 @@ const invoiceSchema = new mongoose.Schema(
     }, // طريقة الدفع
     tripOption: {
       type: String,
-      enum: [
-        "oneWay",
-        "roundTrip",
-        "makkah",
-        "makkahMadinah",
-        "returnOnly",
-        "accommodationOnly",
-      ],
       required: true,
+      enum: [
+        "ذهاب فقط",
+        "ذهاب وعودة",
+        "مكة",
+        "مكة والمدينة",
+        "عودة فقط",
+        "تسكين فقط",
+      ],
     }, // خيارات الرحلة
     madinahDepartureDate: { type: Date }, // تاريخ الذهاب إلى المدينة
     madinahReturnDate: { type: Date }, // تاريخ العودة من المدينة
