@@ -3,29 +3,33 @@ const xlsx = require("xlsx");
 const csv = require("csv-parser");
 const fs = require("fs");
 const multer = require("multer");
+const { Invoice } = require("../Models/InvoiceModel.js");
 
 // Multer configuration for file upload
 const upload = multer({ dest: "uploads/" }).single("file");
 
 // إنشاء عميل جديد
-const createClient = async (req, res) => {
+const createInvoice = async (req, res, next) => {
   try {
-    const client = new Client(req.body);
-    await client.save();
-    res.status(201).json(client);
-  } catch (error) {
-    if (error.code === 11000) {
-      const field = Object.keys(error.keyValue)[0];
+    const { client, trip } = req.body;
+
+    // Check if an invoice already exists for this client and trip
+    const existingInvoice = await Invoice.findOne({ client, trip });
+
+    if (existingInvoice) {
       return res.status(400).json({
-        code: 11000,
-        keyValue: error.keyValue,
-        message: `${field} is already in use`,
+        error: "تم إنشاء فاتورة بالفعل لهذا العميل في هذه الرحلة.",
       });
     }
+
+    // If no invoice exists, create a new one
+    const invoice = new Invoice(req.body);
+    await invoice.save();
+    res.status(201).json(invoice);
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
-
 // عرض عميل
 const getClient = async (req, res) => {
   try {
