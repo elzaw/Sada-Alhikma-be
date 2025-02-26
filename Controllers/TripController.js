@@ -278,14 +278,12 @@ const getTripsByDate = async (req, res) => {
   }
 
   try {
-    const startOfDay = new Date(returnDate);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(returnDate);
-    endOfDay.setUTCHours(23, 59, 59, 999);
+    // تحويل تاريخ العودة المحدد إلى تاريخ بدون وقت
+    const targetDate = new Date(returnDate);
+    targetDate.setUTCHours(0, 0, 0, 0);
 
     const trips = await Trip.find({
-      "clients.returnDate": { $gte: startOfDay, $lt: endOfDay },
+      "clients.returnDate": targetDate,
     }).populate("clients.client");
 
     if (!trips.length) {
