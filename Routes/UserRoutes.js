@@ -5,10 +5,10 @@ const {
   LoginUser,
   VerifyToken,
 } = require("../Controllers/UserController");
-
+const { adminMiddleware } = require("../Middlewares/authMiddleware");
 const router = express.Router();
 
-router.route("/").post(RegisterUser);
+router.route("/").post(adminMiddleware, RegisterUser);
 
 router.route("/login").post(LoginUser);
 
