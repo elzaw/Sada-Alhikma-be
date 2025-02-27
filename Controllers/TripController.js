@@ -365,14 +365,8 @@ const getFilteredTrips = async (req, res) => {
     // جلب الرحلات المصفاة
     const trips = await Trip.find(query).populate("clients.client");
 
-    if (!trips.length) {
-      return res
-        .status(404)
-        .json({ message: "لا توجد رحلات مطابقة للفلترات." });
-    }
-
-    // إرجاع النتائج
-    res.json(trips);
+    // إرجاع النتائج (حتى لو كانت فارغة)
+    res.json(trips || []);
   } catch (error) {
     console.error("خطأ في جلب الرحلات:", error);
     res.status(500).json({ error: "خطأ في الخادم أثناء جلب الرحلات." });
