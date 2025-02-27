@@ -30,7 +30,6 @@ const LoginUser = async (req, res, next) => {
     console.log("Received login request:", { username, password }); // Log the request payload
 
     const user = await User.findOne({ username });
-    console.log("sssss" + user);
 
     if (!user) {
       console.log("User not found:", username); // Log if user is not found
@@ -43,7 +42,7 @@ const LoginUser = async (req, res, next) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id, role }, process.env.JWT_SECRET, {
       expiresIn: "2h",
     });
 
