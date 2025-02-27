@@ -324,16 +324,16 @@ const getFilteredTrips = async (req, res) => {
     // بناء الاستعلام
     let query = {};
 
-    // تحديد نوع الرحلة بناءً على departureLocation و destination
+    // تحديد نوع الرحلة بناءً على القيم الإنجليزية
     if (tripType) {
-      if (tripType === "ذهاب") {
+      if (tripType === "go") {
         query["busDetails.departureLocation"] = "المدينة"; // رحلات الذهاب من المدينة
-      } else if (tripType === "عودة") {
+      } else if (tripType === "return") {
         query["busDetails.destination"] = "المدينة"; // رحلات العودة إلى المدينة
       } else {
         return res
           .status(400)
-          .json({ error: "نوع الرحلة غير صالح. استخدم 'ذهاب' أو 'عودة'." });
+          .json({ error: "نوع الرحلة غير صالح. استخدم 'go' أو 'return'." });
       }
     } else {
       // إذا لم يتم تحديد نوع الرحلة، نعرض جميع رحلات المدينة (ذهاب وعودة)
