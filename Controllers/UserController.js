@@ -29,6 +29,12 @@ const LoginUser = async (req, res, next) => {
     const { username, password } = req.body;
     console.log("Received login request:", { username, password }); // Log the request payload
 
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ error: "Username and password are required" });
+    }
+
     const user = await User.findOne({ username });
 
     if (!user) {
@@ -42,14 +48,18 @@ const LoginUser = async (req, res, next) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ id: user._id, role }, process.env.JWT_SECRET, {
-      expiresIn: "2h",
-    });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "2h",
+      }
+    );
 
     res.json({ user, token });
   } catch (error) {
     console.error("Login error:", error); // Log any unexpected errors
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: "Something went wrong" });
   }
 };
 
