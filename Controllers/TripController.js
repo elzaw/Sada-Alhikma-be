@@ -318,26 +318,29 @@ const getTripsByDate = async (req, res) => {
 };
 
 const getFilteredTrips = async (req, res) => {
-  const { destination, tripType, date } = req.query;
+  const { tripType, date } = req.query;
 
   try {
     // بناء الاستعلام
     let query = {};
 
-    // الفلتر الأساسي: المدينة
-    if (destination) {
-      query["busDetails.destination"] = destination;
-    }
-
-    // فلتر نوع الرحلة (ذهاب أو عودة)
+    // تحديد نوع الرحلة بناءً على departureLocation و destination
     if (tripType) {
-      if (tripType === "ذهاب" || tripType === "عودة") {
-        query["tripType"] = tripType;
+      if (tripType === "ذهاب") {
+        query["busDetails.departureLocation"] = "المدينة"; // رحلات الذهاب من المدينة
+      } else if (tripType === "عودة") {
+        query["busDetails.destination"] = "المدينة"; // رحلات العودة إلى المدينة
       } else {
         return res
           .status(400)
           .json({ error: "نوع الرحلة غير صالح. استخدم 'ذهاب' أو 'عودة'." });
       }
+    } else {
+      // إذا لم يتم تحديد نوع الرحلة، نعرض جميع رحلات المدينة (ذهاب وعودة)
+      query.$or = [
+        { "busDetails.departureLocation": "المدينة" }, // رحلات الذهاب
+        { "busDetails.destination": "المدينة" }, // رحلات العودة
+      ];
     }
 
     // فلتر التاريخ
@@ -349,9 +352,13 @@ const getFilteredTrips = async (req, res) => {
       nextDay.setDate(nextDay.getDate() + 1);
 
       // البحث حسب تاريخ الرحلة أو تاريخ عودة العملاء
-      query.$or = [
-        { date: { $gte: targetDate, $lt: nextDay } }, // تاريخ الرحلة
-        { "clients.returnDate": { $gte: targetDate, $lt: nextDay } }, // تاريخ عودة العملاء
+      query.$and = [
+        {
+          $or: [
+            { date: { $gte: targetDate, $lt: nextDay } }, // تاريخ الرحلة
+            { "clients.returnDate": { $gte: targetDate, $lt: nextDay } }, // تاريخ عودة العملاء
+          ],
+        },
       ];
     }
 
