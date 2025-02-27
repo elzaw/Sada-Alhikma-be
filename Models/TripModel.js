@@ -29,30 +29,25 @@ const tripSchema = new mongoose.Schema(
       },
     ],
 
-    clients: {
-      type: [
-        {
-          client: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Client",
-          },
-          clientCount: { type: Number, default: 1, min: 1 },
-          accompanyingPersons: [accompanyingPersonSchema],
-          returnStatus: { type: String, enum: ["نعم", "لا"], default: "لا" },
-          returnDate: {
-            type: Date,
-            validate: {
-              validator: function (value) {
-                return this.returnStatus === "نعم" ? !!value : true;
-              },
-              message: "returnDate is required when returnStatus is 'نعم'.",
-            },
-          },
-          totalCost: { type: Number, default: 0, min: 0 },
+    clients: [
+      {
+        client: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Client",
+          required: true,
         },
-      ],
-      default: [], // Allow creating trips without clients
-    },
+        clientCount: { type: Number, default: 1, min: 1 },
+        accompanyingPersons: [accompanyingPersonSchema],
+        returnStatus: { type: String, enum: ["نعم", "لا"], default: "لا" },
+        returnDate: {
+          type: Date,
+          required: function () {
+            return this.returnStatus === "نعم"; // Required only if returnStatus is "نعم"
+          },
+        },
+        totalCost: { type: Number, default: 0, min: 0 },
+      },
+    ],
 
     totalTripCost: { type: Number, default: 0, min: 0 },
     totalTripPaid: { type: Number, default: 0, min: 0 },
