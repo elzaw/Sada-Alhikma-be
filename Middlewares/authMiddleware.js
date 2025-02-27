@@ -1,22 +1,19 @@
-import { verify } from "jsonwebtoken";
-// const User = require("../models/users");
-import { promisify } from "util";
+const jwt = require("jsonwebtoken");
+const { promisify } = require("util");
 
 const authMiddleware = async (req, res, next) => {
   const { authorization } = req.headers;
 
-  if (!authorization) {
+  if (!authorization || !authorization.startsWith("Bearer ")) {
     return res.status(401).json({ message: "You have to login first" });
   }
 
+  const token = authorization.split(" ")[1];
+
   try {
-    const decoded = await promisify(verify)(
-      authorization,
-      process.env.JWT_SECRET
-    );
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
     req.id = decoded.id;
-
     next();
   } catch (err) {
     res.status(401).json({ message: "You aren't authenticated." });
@@ -24,26 +21,26 @@ const authMiddleware = async (req, res, next) => {
 };
 
 const adminMiddleware = async (req, res, next) => {
-  // console.log(req.headers.authorization);
   const { authorization } = req.headers;
-  if (!authorization) {
+
+  if (!authorization || !authorization.startsWith("Bearer ")) {
     return res.status(401).json({ message: "You have to login first" });
   }
 
-  try {
-    const decode = await promisify(verify)(
-      authorization,
-      process.env.JWT_SECRET
-    );
+  const token = authorization.split(" ")[1];
 
-    if (!decode || decode.role !== "admin") {
-      return res.status(400).json({ message: "You don't have access here" });
+  try {
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+    if (!decoded || decoded.role !== "admin") {
+      return res.status(403).json({ message: "You don't have access here" });
     }
 
+    req.user = decoded;
     next();
   } catch (error) {
     res.status(403).json({ message: "Permission denied." });
   }
 };
 
-export default { authMiddleware, adminMiddleware };
+module.exports = { authMiddleware, adminMiddleware };
