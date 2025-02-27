@@ -35,9 +35,8 @@ const tripSchema = new mongoose.Schema(
           client: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Client",
-            required: true,
           },
-          clientCount: { type: Number, default: 1, min: 0 },
+          clientCount: { type: Number, default: 1, min: 1 },
           accompanyingPersons: [accompanyingPersonSchema],
           returnStatus: { type: String, enum: ["نعم", "لا"], default: "لا" },
           returnDate: {
@@ -49,15 +48,10 @@ const tripSchema = new mongoose.Schema(
               message: "returnDate is required when returnStatus is 'نعم'.",
             },
           },
-          totalCost: { type: Number, default: 0, min: 0, required: true },
+          totalCost: { type: Number, default: 0, min: 0 },
         },
       ],
-      validate: {
-        validator: function (value) {
-          return value.length > 0;
-        },
-        message: "At least one client is required for the trip.",
-      },
+      default: [], // Allow creating trips without clients
     },
 
     totalTripCost: { type: Number, default: 0, min: 0 },
