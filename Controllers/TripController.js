@@ -321,62 +321,56 @@ const getFilteredTrips = async (req, res) => {
   const { destination, tripType, date } = req.query;
 
   try {
-    // Base query to filter trips
+    // بناء الاستعلام
     let query = {};
 
-    // Filter by trip type (ذهاب or عودة)
+    // الفلتر الأساسي: المدينة
+    if (destination) {
+      query["busDetails.destination"] = destination;
+    }
+
+    // فلتر نوع الرحلة (ذهاب أو عودة)
     if (tripType) {
       if (tripType === "ذهاب" || tripType === "عودة") {
         query["tripType"] = tripType;
-
-        // Filter by departureLocation for ذهاب trips
-        if (tripType === "ذهاب" && destination) {
-          query["busDetails.departureLocation"] = destination;
-        }
-
-        // Filter by destination for عودة trips
-        if (tripType === "عودة" && destination) {
-          query["busDetails.destination"] = destination;
-        }
       } else {
         return res
           .status(400)
-          .json({ error: "Invalid trip type. Use 'ذهاب' or 'عودة'." });
+          .json({ error: "نوع الرحلة غير صالح. استخدم 'ذهاب' أو 'عودة'." });
       }
     }
 
-    // Filter by date (optional)
+    // فلتر التاريخ
     if (date) {
       const targetDate = new Date(date);
-      targetDate.setUTCHours(0, 0, 0, 0); // Set to UTC midnight
+      targetDate.setUTCHours(0, 0, 0, 0); // ضبط الوقت إلى منتصف الليل
 
       const nextDay = new Date(targetDate);
       nextDay.setDate(nextDay.getDate() + 1);
 
-      // Check if the trip's date or return date matches the target date
+      // البحث حسب تاريخ الرحلة أو تاريخ عودة العملاء
       query.$or = [
-        { date: { $gte: targetDate, $lt: nextDay } }, // Departure date
-        { "clients.returnDate": { $gte: targetDate, $lt: nextDay } }, // Return date
+        { date: { $gte: targetDate, $lt: nextDay } }, // تاريخ الرحلة
+        { "clients.returnDate": { $gte: targetDate, $lt: nextDay } }, // تاريخ عودة العملاء
       ];
     }
 
-    // Fetch trips based on the constructed query
+    // جلب الرحلات المصفاة
     const trips = await Trip.find(query).populate("clients.client");
 
     if (!trips.length) {
       return res
         .status(404)
-        .json({ message: "No trips found matching the filters." });
+        .json({ message: "لا توجد رحلات مطابقة للفلترات." });
     }
 
-    // Return filtered trips
+    // إرجاع النتائج
     res.json(trips);
   } catch (error) {
-    console.error("Error fetching filtered trips:", error);
-    res.status(500).json({ error: "Server error while fetching trips." });
+    console.error("خطأ في جلب الرحلات:", error);
+    res.status(500).json({ error: "خطأ في الخادم أثناء جلب الرحلات." });
   }
 };
-
 module.exports = {
   CreateTrip,
   UpdateTrip,
