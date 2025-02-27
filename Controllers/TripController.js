@@ -331,10 +331,8 @@ const getFilteredTrips = async (req, res) => {
 
     // Filter by trip type (ذهاب or عودة)
     if (tripType) {
-      if (tripType === "ذهاب") {
-        query["tripType"] = "ذهاب"; // Assuming you have a `tripType` field in your Trip schema
-      } else if (tripType === "عودة") {
-        query["tripType"] = "عودة";
+      if (tripType === "ذهاب" || tripType === "عودة") {
+        query["tripType"] = tripType;
       } else {
         return res
           .status(400)
