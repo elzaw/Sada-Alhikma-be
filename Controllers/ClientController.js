@@ -9,25 +9,20 @@ const { Invoice } = require("../Models/InvoiceModel.js");
 const upload = multer({ dest: "uploads/" }).single("file");
 
 // إنشاء عميل جديد
-const createInvoice = async (req, res, next) => {
+const createClient = async (req, res) => {
   try {
-    const { client, trip } = req.body;
-
-    // Check if an invoice already exists for this client and trip
-    const existingInvoice = await Invoice.findOne({ client, trip });
-
-    if (existingInvoice) {
+    const client = new Client(req.body);
+    await client.save();
+    res.status(201).json(client);
+  } catch (error) {
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
       return res.status(400).json({
-        error: "تم إنشاء فاتورة بالفعل لهذا العميل في هذه الرحلة.",
+        code: 11000,
+        keyValue: error.keyValue,
+        message: `${field} is already in use`,
       });
     }
-
-    // If no invoice exists, create a new one
-    const invoice = new Invoice(req.body);
-    await invoice.save();
-    res.status(201).json(invoice);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
   }
 };
 // عرض عميل

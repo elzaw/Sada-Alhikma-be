@@ -3,6 +3,18 @@ const { Invoice } = require("../Models/InvoiceModel");
 // إنشاء فاتورة جديدة
 const createInvoice = async (req, res, next) => {
   try {
+    const { client, trip } = req.body;
+
+    // Check if an invoice already exists for this client and trip
+    const existingInvoice = await Invoice.findOne({ client, trip });
+
+    if (existingInvoice) {
+      return res.status(400).json({
+        error: "تم إنشاء فاتورة بالفعل لهذا العميل في هذه الرحلة.",
+      });
+    }
+
+    // If no invoice exists, create a new one
     const invoice = new Invoice(req.body);
     await invoice.save();
     res.status(201).json(invoice);
