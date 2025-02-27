@@ -37,7 +37,7 @@ const tripSchema = new mongoose.Schema(
             ref: "Client",
             required: true,
           },
-          clientCount: { type: Number, default: 1, min: 1 },
+          clientCount: { type: Number, default: 1, min: 0 },
           accompanyingPersons: [accompanyingPersonSchema],
           returnStatus: { type: String, enum: ["نعم", "لا"], default: "لا" },
           returnDate: {
