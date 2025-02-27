@@ -23,4 +23,6 @@ router.route("/:tripId/clients").post(AddClientToTrip);
 router.route("/:id").delete(DeleteTrip).get(getTrip);
 router.get("/trip/:tripId/client/:clientId", getTripByClient); // المسار الجديد
 
+router.get("/trips/filter", getFilteredTrips);
+
 module.exports = router;

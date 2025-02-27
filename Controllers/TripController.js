@@ -317,6 +317,63 @@ const getTripsByDate = async (req, res) => {
   }
 };
 
+const getFilteredTrips = async (req, res) => {
+  const { destination, tripType, date } = req.query;
+
+  try {
+    // Base query to filter trips
+    let query = {};
+
+    // Filter by destination (e.g., المدينة)
+    if (destination) {
+      query["busDetails.destination"] = destination;
+    }
+
+    // Filter by trip type (ذهاب or عودة)
+    if (tripType) {
+      if (tripType === "ذهاب") {
+        query["tripType"] = "ذهاب"; // Assuming you have a `tripType` field in your Trip schema
+      } else if (tripType === "عودة") {
+        query["tripType"] = "عودة";
+      } else {
+        return res
+          .status(400)
+          .json({ error: "Invalid trip type. Use 'ذهاب' or 'عودة'." });
+      }
+    }
+
+    // Filter by date (optional)
+    if (date) {
+      const targetDate = new Date(date);
+      targetDate.setUTCHours(0, 0, 0, 0); // Set to UTC midnight
+
+      const nextDay = new Date(targetDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      // Check if the trip's date or return date matches the target date
+      query.$or = [
+        { date: { $gte: targetDate, $lt: nextDay } }, // Departure date
+        { "clients.returnDate": { $gte: targetDate, $lt: nextDay } }, // Return date
+      ];
+    }
+
+    // Fetch trips based on the constructed query
+    const trips = await Trip.find(query).populate("clients.client");
+
+    if (!trips.length) {
+      return res
+        .status(404)
+        .json({ message: "No trips found matching the filters." });
+    }
+
+    // Return filtered trips
+    res.json(trips);
+  } catch (error) {
+    console.error("Error fetching filtered trips:", error);
+    res.status(500).json({ error: "Server error while fetching trips." });
+  }
+};
+
 module.exports = {
   CreateTrip,
   UpdateTrip,
@@ -328,4 +385,5 @@ module.exports = {
   AddClientToTrip,
   getTripByClient,
   getTripsByDate,
+  getFilteredTrips,
 };
