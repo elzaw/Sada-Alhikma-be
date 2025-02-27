@@ -10,6 +10,7 @@ const tripRoutes = require("./Routes/TripRoutes");
 const userRoutes = require("./Routes/UserRoutes");
 const invoiceRoutes = require("./Routes/InvoiceRoutes");
 const accommodationRoutes = require("./Routes/AccommodationRoutes");
+const { initializeAdmin } = require("./Controllers/UserController");
 
 dotenv.config();
 
@@ -19,6 +20,8 @@ const PORT = process.env.PORT || 8000;
 connect(process.env.MONGO_URI)
   .then(() => {
     console.log("Connected to DB");
+
+    initializeAdmin();
   })
   .catch((err) => {
     console.log(err);

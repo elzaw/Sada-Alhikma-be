@@ -2,6 +2,29 @@ const { User } = require("../Models/UserModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const initializeAdmin = async () => {
+  try {
+    // Check if an admin user already exists
+    const adminUser = await User.findOne({ role: "admin" });
+    if (adminUser) {
+      console.log("Admin user already exists:", adminUser.username);
+      return;
+    }
+
+    // Create the admin user
+    const hashedPassword = await bcrypt.hash("P@ssw0rd", 10); // Use a strong password in production
+    const admin = await User.create({
+      username: "admin",
+      password: hashedPassword,
+      role: "admin",
+    });
+
+    console.log("Admin user created successfully:", admin.username);
+  } catch (error) {
+    console.error("Error initializing admin user:", error);
+  }
+};
+
 // تسجيل مستخدم جديد
 const RegisterUser = async (req, res, next) => {
   try {
@@ -95,4 +118,10 @@ const DeleteUser = async (req, res, next) => {
   }
 };
 
-module.exports = { RegisterUser, LoginUser, VerifyToken, DeleteUser };
+module.exports = {
+  RegisterUser,
+  LoginUser,
+  VerifyToken,
+  DeleteUser,
+  initializeAdmin,
+};
