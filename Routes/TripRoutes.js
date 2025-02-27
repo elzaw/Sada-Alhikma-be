@@ -10,6 +10,7 @@ const {
   AddClientToTrip,
   getTripByClient,
   getTripsByDate,
+  getFilteredTrips,
 } = require("../Controllers/TripController");
 
 const router = express.Router();
