@@ -59,11 +59,13 @@ const tripSchema = new mongoose.Schema(
 // Auto-calculate totalTripCost and totalTripNetAmount
 tripSchema.pre("save", function (next) {
   try {
-    // Calculate totalTripCost
-    this.totalTripCost = this.clients.reduce(
-      (sum, client) => sum + client.totalCost,
-      0
-    );
+    // Recalculate totalTripCost only if clients array is provided and not empty
+    if (this.clients && this.clients.length > 0) {
+      this.totalTripCost = this.clients.reduce(
+        (sum, client) => sum + client.totalCost,
+        0
+      );
+    }
 
     // Ensure totalTripPaid does not exceed totalTripCost
     if (this.totalTripPaid > this.totalTripCost) {
