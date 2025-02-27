@@ -324,15 +324,20 @@ const getFilteredTrips = async (req, res) => {
     // Base query to filter trips
     let query = {};
 
-    // Filter by destination (e.g., المدينة)
-    if (destination) {
-      query["busDetails.destination"] = destination;
-    }
-
     // Filter by trip type (ذهاب or عودة)
     if (tripType) {
       if (tripType === "ذهاب" || tripType === "عودة") {
         query["tripType"] = tripType;
+
+        // Filter by departureLocation for ذهاب trips
+        if (tripType === "ذهاب" && destination) {
+          query["busDetails.departureLocation"] = destination;
+        }
+
+        // Filter by destination for عودة trips
+        if (tripType === "عودة" && destination) {
+          query["busDetails.destination"] = destination;
+        }
       } else {
         return res
           .status(400)

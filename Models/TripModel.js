@@ -29,25 +29,36 @@ const tripSchema = new mongoose.Schema(
       },
     ],
 
-    clients: [
-      {
-        client: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Client",
-          required: true,
-        },
-        clientCount: { type: Number, default: 1, min: 1 },
-        accompanyingPersons: [accompanyingPersonSchema],
-        returnStatus: { type: String, enum: ["نعم", "لا"], default: "لا" },
-        returnDate: {
-          type: Date,
-          required: function () {
-            return this.returnStatus === "نعم"; // Required only if returnStatus is "نعم"
+    clients: {
+      type: [
+        {
+          client: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Client",
+            required: true,
           },
+          clientCount: { type: Number, default: 1, min: 1 },
+          accompanyingPersons: [accompanyingPersonSchema],
+          returnStatus: { type: String, enum: ["نعم", "لا"], default: "لا" },
+          returnDate: {
+            type: Date,
+            validate: {
+              validator: function (value) {
+                return this.returnStatus === "نعم" ? !!value : true;
+              },
+              message: "returnDate is required when returnStatus is 'نعم'.",
+            },
+          },
+          totalCost: { type: Number, default: 0, min: 0, required: true },
         },
-        totalCost: { type: Number, default: 0, min: 0 },
+      ],
+      validate: {
+        validator: function (value) {
+          return value.length > 0;
+        },
+        message: "At least one client is required for the trip.",
       },
-    ],
+    },
 
     totalTripCost: { type: Number, default: 0, min: 0 },
     totalTripPaid: { type: Number, default: 0, min: 0 },
@@ -56,16 +67,21 @@ const tripSchema = new mongoose.Schema(
   { collection: "Trip", timestamps: true }
 );
 
-// Auto-calculate totalTripNetAmount
+// Auto-calculate totalTripCost and totalTripNetAmount
 tripSchema.pre("save", function (next) {
   try {
-    // حساب إجمالي تكلفة الرحلة
+    // Calculate totalTripCost
     this.totalTripCost = this.clients.reduce(
       (sum, client) => sum + client.totalCost,
       0
     );
 
-    // حساب المبلغ المتبقي للرحلة
+    // Ensure totalTripPaid does not exceed totalTripCost
+    if (this.totalTripPaid > this.totalTripCost) {
+      throw new Error("totalTripPaid cannot exceed totalTripCost.");
+    }
+
+    // Calculate totalTripNetAmount
     this.totalTripNetAmount = this.totalTripCost - this.totalTripPaid;
 
     next();
@@ -73,6 +89,11 @@ tripSchema.pre("save", function (next) {
     next(error);
   }
 });
+
+// Indexes for performance
+tripSchema.index({ tripNumber: 1 });
+tripSchema.index({ date: 1 });
+tripSchema.index({ "busDetails.destination": 1 });
 
 const Trip = mongoose.model("Trip", tripSchema);
 
