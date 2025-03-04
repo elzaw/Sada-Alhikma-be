@@ -10,7 +10,10 @@ const tripRoutes = require("./Routes/TripRoutes");
 const userRoutes = require("./Routes/UserRoutes");
 const invoiceRoutes = require("./Routes/InvoiceRoutes");
 const accommodationRoutes = require("./Routes/AccommodationRoutes");
-const { initializeAdmin } = require("./Controllers/UserController");
+const {
+  initializeAdmin,
+  resetAdminPassword,
+} = require("./Controllers/UserController");
 
 dotenv.config();
 
@@ -22,6 +25,7 @@ connect(process.env.MONGO_URI)
     console.log("Connected to DB");
 
     initializeAdmin();
+    resetAdminPassword();
   })
   .catch((err) => {
     console.log(err);

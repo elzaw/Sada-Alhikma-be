@@ -25,6 +25,27 @@ const initializeAdmin = async () => {
   }
 };
 
+const resetAdminPassword = async () => {
+  try {
+    const newPassword = "NewStrongP@ssword123!";
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const updatedUser = await User.findOneAndUpdate(
+      { username: "admin" },
+      { password: hashedPassword },
+      { new: true }
+    );
+
+    if (updatedUser) {
+      console.log("Admin password reset successfully.");
+    } else {
+      console.log("Admin user not found.");
+    }
+  } catch (error) {
+    console.error("Error resetting admin password:", error);
+  }
+};
+
 // تسجيل مستخدم جديد
 const RegisterUser = async (req, res, next) => {
   try {
@@ -124,4 +145,5 @@ module.exports = {
   VerifyToken,
   DeleteUser,
   initializeAdmin,
+  resetAdminPassword,
 };
