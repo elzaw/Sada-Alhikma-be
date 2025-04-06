@@ -373,6 +373,143 @@ const getFilteredTrips = async (req, res) => {
     res.status(500).json({ error: "خطأ في الخادم أثناء جلب الرحلات." });
   }
 };
+
+const DeleteClientFromTrip = async (req, res) => {
+  try {
+    const { tripId, clientId } = req.params;
+
+    // Validate IDs
+    if (
+      !mongoose.Types.ObjectId.isValid(tripId) ||
+      !mongoose.Types.ObjectId.isValid(clientId)
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Invalid Trip or Client ID format" });
+    }
+
+    // Find the trip
+    const trip = await Trip.findById(tripId);
+    if (!trip) {
+      return res.status(404).json({ error: "Trip not found" });
+    }
+
+    // Find the client in the trip
+    const clientIndex = trip.clients.findIndex(
+      (c) => c.client.toString() === clientId
+    );
+
+    if (clientIndex === -1) {
+      return res.status(404).json({ error: "Client not found in this trip" });
+    }
+
+    // Get the client data before removing
+    const clientData = trip.clients[clientIndex];
+
+    // Remove the client from the trip
+    trip.clients.splice(clientIndex, 1);
+
+    // Update trip totals
+    trip.totalTripCost -= clientData.totalCost || 0;
+    trip.totalTripPaid -= clientData.totalPaid || 0;
+    trip.totalTripNetAmount = trip.totalTripCost - trip.totalTripPaid;
+
+    // Save the updated trip
+    await trip.save();
+
+    // Remove the trip from the client's bookings
+    await Client.findByIdAndUpdate(
+      clientId,
+      { $pull: { bookings: tripId } },
+      { new: true }
+    );
+
+    res.json({
+      message: "Client removed from trip successfully",
+      updatedTrip: trip,
+    });
+  } catch (error) {
+    console.error("Error removing client from trip:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const UpdateClientOnTrip = async (req, res) => {
+  try {
+    const { tripId, clientId } = req.params;
+    const updateData = req.body;
+
+    // Validate IDs
+    if (
+      !mongoose.Types.ObjectId.isValid(tripId) ||
+      !mongoose.Types.ObjectId.isValid(clientId)
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Invalid Trip or Client ID format" });
+    }
+
+    // Find the trip
+    const trip = await Trip.findById(tripId);
+    if (!trip) {
+      return res.status(404).json({ error: "Trip not found" });
+    }
+
+    // Find the client in the trip
+    const clientInTrip = trip.clients.find(
+      (c) => c.client.toString() === clientId
+    );
+
+    if (!clientInTrip) {
+      return res.status(404).json({ error: "Client not found in this trip" });
+    }
+
+    // Calculate differences for totals
+    const oldCost = clientInTrip.totalCost || 0;
+    const oldPaid = clientInTrip.totalPaid || 0;
+
+    // Update client data
+    if (updateData.accompanyingPersons !== undefined) {
+      clientInTrip.accompanyingPersons = updateData.accompanyingPersons;
+    }
+    if (updateData.returnStatus !== undefined) {
+      clientInTrip.returnStatus = updateData.returnStatus;
+    }
+    if (updateData.returnDate !== undefined) {
+      clientInTrip.returnDate =
+        updateData.returnStatus === "نعم" ? updateData.returnDate : undefined;
+    }
+    if (updateData.totalCost !== undefined) {
+      clientInTrip.totalCost = updateData.totalCost;
+    }
+    if (updateData.totalPaid !== undefined) {
+      clientInTrip.totalPaid = updateData.totalPaid;
+    }
+
+    // Calculate new net amount
+    clientInTrip.netAmount =
+      (clientInTrip.totalCost || 0) - (clientInTrip.totalPaid || 0);
+
+    // Update trip totals
+    trip.totalTripCost =
+      trip.totalTripCost - oldCost + (clientInTrip.totalCost || 0);
+    trip.totalTripPaid =
+      trip.totalTripPaid - oldPaid + (clientInTrip.totalPaid || 0);
+    trip.totalTripNetAmount = trip.totalTripCost - trip.totalTripPaid;
+
+    // Save the updated trip
+    await trip.save();
+
+    res.json({
+      message: "Client data updated successfully",
+      updatedTrip: trip,
+    });
+  } catch (error) {
+    console.error("Error updating client in trip:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   CreateTrip,
   UpdateTrip,
@@ -385,4 +522,6 @@ module.exports = {
   getTripByClient,
   getTripsByDate,
   getFilteredTrips,
+  UpdateClientOnTrip,
+  DeleteClientFromTrip,
 };
