@@ -46,6 +46,9 @@ const tripSchema = new mongoose.Schema(
           },
         },
         totalCost: { type: Number, default: 0, min: 0 },
+        totalPaid: { type: Number, default: 0, min: 0 },
+        remainingAmount: { type: Number, default: 0, min: 0 },
+        notes: { type: String, trim: true },
       },
     ],
 

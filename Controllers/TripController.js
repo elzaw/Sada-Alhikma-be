@@ -141,9 +141,10 @@ const AddClientToTrip = async (req, res) => {
       clientId,
       accompanyingPersons,
       returnStatus,
-      returnDate, // تأكد من وجود returnDate في البيانات المرسلة
+      returnDate,
       totalCost,
       totalPaid,
+      notes,
     } = req.body;
 
     console.log("Received request body:", req.body);
@@ -203,15 +204,19 @@ const AddClientToTrip = async (req, res) => {
       });
     }
 
+    // حساب المبلغ المتبقي
+    const remainingAmount = totalCost - totalPaid;
+
     // إضافة العميل إلى الرحلة
     const newClient = {
       client: clientId,
-      accompanyingPersons: accompanyingPersons ?? [],
+      accompanyingPersons: accompanyingPersons || [],
       returnStatus,
-      returnDate: returnStatus === "نعم" ? returnDate : undefined, // إضافة returnDate فقط إذا كان returnStatus هو "نعم"
+      returnDate: returnStatus === "نعم" ? returnDate : undefined,
       totalCost,
       totalPaid,
-      netAmount: totalCost - totalPaid,
+      remainingAmount,
+      notes,
     };
 
     trip.clients.push(newClient);
