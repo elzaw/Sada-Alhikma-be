@@ -145,6 +145,7 @@ const AddClientToTrip = async (req, res) => {
       totalCost,
       totalPaid,
       notes,
+      boardingLocation,
     } = req.body;
 
     console.log("Received request body:", req.body);
@@ -217,6 +218,7 @@ const AddClientToTrip = async (req, res) => {
       totalPaid,
       remainingAmount,
       notes,
+      boardingLocation: boardingLocation || client.boardingLocation, // Use provided location or client's default
     };
 
     trip.clients.push(newClient);
@@ -489,6 +491,9 @@ const UpdateClientOnTrip = async (req, res) => {
     }
     if (updateData.totalPaid !== undefined) {
       clientInTrip.totalPaid = updateData.totalPaid;
+    }
+    if (updateData.boardingLocation !== undefined) {
+      clientInTrip.boardingLocation = updateData.boardingLocation;
     }
 
     // Calculate new net amount

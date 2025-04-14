@@ -37,6 +37,7 @@ const tripSchema = new mongoose.Schema(
           required: true,
         },
         clientCount: { type: Number, default: 1, min: 1 },
+        boardingLocation: { type: String, trim: true },
         accompanyingPersons: [accompanyingPersonSchema],
         returnStatus: { type: String, enum: ["نعم", "لا"], default: "لا" },
         returnDate: {
@@ -59,9 +60,23 @@ const tripSchema = new mongoose.Schema(
   { collection: "Trip", timestamps: true }
 );
 
-// Auto-calculate totalTripCost and totalTripNetAmount
-tripSchema.pre("save", function (next) {
+// Add pre-save middleware to set default boarding location
+tripSchema.pre("save", async function (next) {
   try {
+    // Set default boarding location from client data if not provided
+    if (this.clients && this.clients.length > 0) {
+      for (const client of this.clients) {
+        if (!client.boardingLocation) {
+          const clientDoc = await mongoose
+            .model("Client")
+            .findById(client.client);
+          if (clientDoc) {
+            client.boardingLocation = clientDoc.boardingLocation;
+          }
+        }
+      }
+    }
+
     // Recalculate totalTripCost only if clients array is provided and not empty
     if (this.clients && this.clients.length > 0) {
       this.totalTripCost = this.clients.reduce(
