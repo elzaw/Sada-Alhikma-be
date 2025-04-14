@@ -65,10 +65,18 @@ const updateClient = async (req, res) => {
 // حذف العميل
 const deleteClient = async (req, res) => {
   try {
+    // Check if user is admin
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({
+        error:
+          "غير مصرح لك بحذف العملاء. يجب أن تكون مسؤولاً للقيام بهذه العملية.",
+      });
+    }
+
     const deletedClient = await Client.findByIdAndDelete(req.params.id);
     if (!deletedClient)
-      return res.status(404).json({ error: "Client not found" });
-    res.json({ message: "Client deleted successfully" });
+      return res.status(404).json({ error: "العميل غير موجود" });
+    res.json({ message: "تم حذف العميل بنجاح" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

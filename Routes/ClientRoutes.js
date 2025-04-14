@@ -10,12 +10,17 @@ const {
   // sendWhatsAppMessage,
   // sendBulkWhatsAppMessages,
 } = require("../Controllers/ClientController");
+const { adminMiddleware } = require("../Middlewares/authMiddleware");
 
 const router = express.Router();
 
 router.route("/").get(getAllClients).post(createClient);
 
-router.route("/:id").delete(deleteClient).put(updateClient).get(getClient);
+router
+  .route("/:id")
+  .delete(adminMiddleware, deleteClient)
+  .put(updateClient)
+  .get(getClient);
 
 router.post("/upload", upload, uploadClientsFromFile);
 

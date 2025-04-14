@@ -14,26 +14,31 @@ const {
   DeleteClientFromTrip,
   UpdateClientOnTrip,
 } = require("../Controllers/TripController");
+const { adminMiddleware } = require("../Middlewares/authMiddleware");
 
 const router = express.Router();
 
-// Trip routes
-router.route("/").post(CreateTrip).get(GetAllTrips);
-
-router.route("/:id").get(getTrip).patch(UpdateTrip).delete(DeleteTrip);
-
-// Trip report and filtering
-router.route("/report/:id").get(GetTripReport);
+// Specific routes first
 router.route("/bydate").get(getTripsByDate);
 router.route("/last-trip-number").get(GetLastTripNumberForDay);
-router.get("/trips/filter", getFilteredTrips);
+router.route("/trips/filter").get(getFilteredTrips);
+router.route("/report/:id").get(GetTripReport);
+
+// General routes
+router.route("/").post(CreateTrip).get(GetAllTrips);
+
+// Parameterized routes
+router
+  .route("/:id")
+  .get(getTrip)
+  .patch(UpdateTrip)
+  .delete(adminMiddleware, DeleteTrip);
 
 // Client-trip relationships
 router.route("/:tripId/clients").post(AddClientToTrip);
-
 router
   .route("/:tripId/clients/:clientId")
-  .delete(DeleteClientFromTrip)
+  .delete(adminMiddleware, DeleteClientFromTrip)
   .patch(UpdateClientOnTrip);
 
 // Get trip with specific client
