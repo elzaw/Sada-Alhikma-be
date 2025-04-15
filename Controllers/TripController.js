@@ -31,14 +31,6 @@ const UpdateTrip = async (req, res, next) => {
 // حذف رحلة
 const DeleteTrip = async (req, res, next) => {
   try {
-    // Check if user is admin (this will be handled by the middleware)
-    if (!req.user || !req.user.isAdmin) {
-      return res.status(403).json({
-        error:
-          "غير مصرح لك بحذف الرحلات. يجب أن تكون مسؤولاً للقيام بهذه العملية.",
-      });
-    }
-
     const trip = await Trip.findByIdAndDelete(req.params.id);
     if (!trip) return res.status(404).json({ error: "الرحلة غير موجودة" });
     res.json({ message: "تم حذف الرحلة بنجاح" });

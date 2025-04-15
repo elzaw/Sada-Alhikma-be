@@ -65,7 +65,7 @@ const updateClient = async (req, res) => {
 // حذف العميل
 const deleteClient = async (req, res) => {
   try {
-    // Check if user is admin
+    // Check if user is admin based on token role
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).json({
         error:
@@ -78,6 +78,7 @@ const deleteClient = async (req, res) => {
       return res.status(404).json({ error: "العميل غير موجود" });
     res.json({ message: "تم حذف العميل بنجاح" });
   } catch (error) {
+    console.error("Error in deleteClient:", error);
     res.status(400).json({ error: error.message });
   }
 };
